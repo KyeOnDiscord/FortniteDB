@@ -1,0 +1,158 @@
+﻿@page "/info/AthenaCharacter/{CosmeticID}"
+@using System.Text.Json.Nodes
+
+<PageTitle>Cosmetic Info</PageTitle>
+
+<style>
+    body {
+        background-color: #212529
+    }
+
+</style>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col align-content-center" style="max-width:40%">
+            <div class="card bg-dark border-0 w-50" style="width: 18rem;margin-left:100px">
+                <img src="@Skin.images.icon" class="card-img-top" width="450">
+                <div class="card-body">
+                    <h5 class="card-title text-white">@Skin.name</h5>
+                    <p class="card-text text-white-50">ID: <code style="white-space: pre-wrap;">@Skin.id</code><br /><br />@Skin.description </p>
+                </div>
+            </div>
+        </div>
+        @if (CharacterParts != null && CharacterParts.Count > 0)
+        {
+            <div class="col-8">
+                <p class="fs-3 text-white">Info for Character Parts (@CharacterParts.Count)</p>
+                <ul class="list-group">
+
+                    @foreach (var item in CharacterParts)
+                    {
+                        <li class="list-group-item list-group-item-danger">@item.Key</li>
+                        <span class="text-white">@((MarkupString)item.Value)</span>
+                    }
+                    <br />
+                </ul>
+            </div>
+        }
+    </div>
+</div>
+@code {
+    [Parameter]
+    public string? CosmeticID { get; set; }
+
+    public string? errorMsg { get; set; } = string.Empty;
+
+    private const string ExportUrl = "https://fortnitecentral.gmatrixgames.ga/api/v1/export?path=";
+
+    public static Client.FortniteAPIResponse.Datum Skin;
+    public Dictionary<string, MarkupString> CharacterParts { get; set; }
+
+    private static async Task<MarkupString> GetInfoFromCP(MarkupString characterPartPath)
+    {
+        MarkupString resultString = (MarkupString)"";
+        string url = $"{ExportUrl}{characterPartPath}";
+        var result = await Client.Util.Http.GetStringAsync(url);
+        dynamic data = JsonNode.Parse(result);
+
+        foreach (var property in data["jsonOutput"])
+        {
+            foreach (var propertyy in property["Properties"])
+            {
+                KeyValuePair<string, JsonNode> a = propertyy;
+
+
+                if (a.Key == "SkeletalMesh" || a.Key == "AnimClass" || a.Key == "MaterialOverrides")
+                {
+
+                    if (a.Value is JsonObject)
+                    {
+                        string gamePath = "";
+                        if ((string)a.Value["AssetPathName"] != null)
+                        {
+                            gamePath = (string)a.Value["AssetPathName"];
+                        }
+                        else if ((string)a.Value["ObjectName"] != null)
+                        {
+                            gamePath = (string)a.Value["ObjectName"];
+                        }
+
+
+                        FormatGamePath(ref gamePath);
+                        resultString = (MarkupString)$"{resultString}{a.Key}: <code>{gamePath}</code><br>";
+                    }
+                    else if (a.Value is JsonArray)
+                    {
+                        if (a.Value.AsArray() is JsonArray)
+                        {
+                            foreach (JsonNode item in a.Value.AsArray())
+                            {
+                                string gamePath = (string)item["OverrideMaterial"]["AssetPathName"];
+                                FormatGamePath(ref gamePath);
+                                resultString = (MarkupString)$"{resultString}{a.Key}: <code>{gamePath}</code><br>";
+                            }
+
+                        }
+                        else
+                        {
+                            resultString = (MarkupString)$"{resultString}{a.Key}: <code>{string.Join(',', a.Value.AsArray())}</code><br>";
+                        }
+                    }
+                    else if (a.Value is JsonValue)
+                    {
+                        resultString = (MarkupString)$"{resultString}{a.Key}: <code>{a.Value}</code><br>";
+                    }
+                }
+
+            }
+        }
+
+        return resultString;
+    }
+
+
+    //Remove the text after the '.' in a game path so there is no duplicate filename at the end;
+    private static void FormatGamePath(ref string fortniteGamePath)
+    {
+        int index = fortniteGamePath.IndexOf(".");
+        if (index >= 0)
+            fortniteGamePath = fortniteGamePath.Substring(0, index);
+    }
+
+    private static string FormatGamePath(string fortniteGamePath)
+    {
+        FormatGamePath(ref fortniteGamePath);
+        return fortniteGamePath;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        //https://localhost:7031/info/AthenaCharacter/CID_029_Athena_Commando_F_Halloween
+        if (CharacterParts == null)
+        {
+            var result = await Client.Util.Http.GetStringAsync($"{ExportUrl}/Game/Athena/Items/Cosmetics/Characters/{CosmeticID}.{CosmeticID}");
+            if (!string.IsNullOrEmpty(result))
+            {
+                CharacterParts = new();
+                CharacterParts.Clear();
+                dynamic skin = JsonNode.Parse(result);
+                foreach (var characterPart in skin["jsonOutput"][0]["Properties"]["BaseCharacterParts"])
+                {
+                    string part = (string)characterPart["AssetPathName"];
+                    //Remove the duplicate after the '.'
+                    FormatGamePath(ref part);
+
+                    MarkupString cpdata = await GetInfoFromCP((MarkupString)part);
+                    if (!CharacterParts.ContainsKey(part))
+                        CharacterParts.Add(part, cpdata);
+                }
+
+                InvokeAsync(StateHasChanged);
+
+            }
+        }
+
+
+    }
+}

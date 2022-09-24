@@ -1,0 +1,109 @@
+﻿@page "/"
+@inject NavigationManager navman
+<PageTitle>Skins</PageTitle>
+
+<style>
+    body {
+        background-color: #212529
+    }
+
+</style>
+
+<div class="container-fluid">
+    <table class="table table-dark table-hover">
+        <thead>
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Icon</th>
+                <th scope="col">Name</th>
+                <th scope="col">Description</th>
+                <th scope="col">Rarity</th>
+                <th scope="col">Set</th>
+                <th scope="col">Introduction Season</th>
+            </tr>
+        </thead>
+
+        <tbody>
+
+            @if (skins != null)
+            {
+                foreach (var item in skins)
+                {
+                    <tr>
+
+                        <td>@item.id</td>
+                        <td><img @onclick="() => ClickSkin(item)" src="@item.images.smallIcon" width="128" height="128" style="cursor:pointer" /></td>
+                        <td>@item.name</td>
+                        <td>@item.description</td>
+
+
+                        <td>
+                            @if (!string.IsNullOrEmpty(item.rarity.displayValue))
+                            {
+                                @item.rarity.displayValue
+                            }
+                        </td>
+                        <td>
+                            @if (item.set != null && item.set.value != null)
+                            {
+                                @item.set.value
+                            }
+                        </td>
+                        <td>
+                            @if (item.introduction != null)
+                            {
+                                @item.introduction.text
+
+                                <span>(Season @item.introduction.backendValue)</span>
+                            }
+                        </td>
+
+
+
+                    </tr>
+                }
+
+            }
+            else
+            {
+                <div class="spinner-grow text-primary" style="min-width:90px;min-height:90px" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            }
+
+
+        </tbody>
+    </table>
+</div>
+
+@code
+{
+
+    private static List<Client.FortniteAPIResponse.Datum> skins = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var result = await Client.Util.Http.GetFromJsonAsync<Client.FortniteAPIResponse.Rootobject>("https://fortnite-api.com/v2/cosmetics/br/search/all?backendType=AthenaCharacter&responseOptions=ignore_null");
+
+#if !DEBUG
+        skins = result.data.Take(100).ToList();
+#else
+    skins = result.data;
+#endif
+
+        if (skins != null)
+        {
+            InvokeAsync(StateHasChanged);
+        }
+
+    }
+
+
+    private void ClickSkin(Client.FortniteAPIResponse.Datum skin)
+    {
+        SkinInfo.Skin = skin;
+        navman.NavigateTo($"/info/{skin.type.backendValue}/{skin.id}");
+    }
+
+
+}
