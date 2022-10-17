@@ -10,6 +10,7 @@
 </style>
 
 <div class="container-fluid">
+    <p class="text-white">Search: (Press enter to submit) <input type="search" placeholder="Renegade Raider, CID_028_Athena_Commando_F" @bind="searchTerm" style="width:30vw" /></p>
     <table class="table table-dark table-hover">
         <thead>
             <tr>
@@ -27,7 +28,7 @@
 
             @if (skins != null)
             {
-                foreach (var item in skins)
+                foreach (var item in filteredSkins())
                 {
                     <tr>
 
@@ -80,6 +81,24 @@
 {
 
     private static List<Client.FortniteAPIResponse.Datum> skins = null;
+    private static string? searchTerm { get; set; }
+
+    private void OnInputEvent(ChangeEventArgs changeEvent)
+    {
+        searchTerm = (string)changeEvent.Value;
+    }
+    
+    private static List<Client.FortniteAPIResponse.Datum> filteredSkins()
+    {
+        if (string.IsNullOrEmpty(searchTerm))
+        {
+            return skins;
+        }
+        else
+        {
+            return skins.Where(x => x.name.ToLower().Contains(searchTerm.ToLower()) || x.id.ToLower().Contains(searchTerm.ToLower())).ToList();
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {

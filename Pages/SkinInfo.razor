@@ -10,6 +10,7 @@
 
 </style>
 
+
 <div class="container-fluid">
     <div class="row">
         <div class="col align-content-center" style="max-width:40%">
@@ -31,6 +32,7 @@
                     {
                         <li class="list-group-item list-group-item-danger">@item.Key</li>
                         <span class="text-white">@((MarkupString)item.Value)</span>
+                        <br />
                     }
                     <br />
                 </ul>
@@ -58,54 +60,62 @@
 
         foreach (var property in data["jsonOutput"])
         {
+            var b = property.GetType();
+            
             foreach (var propertyy in property["Properties"])
             {
                 KeyValuePair<string, JsonNode> a = propertyy;
+                
+                //if (a.Key == "SkeletalMesh" || a.Key == "AnimClass" || a.Key == "MaterialOverrides")
+                //{
+
+                //    if (a.Value is JsonObject)
+                //    {
+                //        string gamePath = "";
+                //        if ((string)a.Value["AssetPathName"] != null)
+                //        {
+                //            gamePath = (string)a.Value["AssetPathName"];
+                //        }
+                //        else if ((string)a.Value["ObjectName"] != null)
+                //        {
+                //            gamePath = (string)a.Value["ObjectName"];
+                //        }
 
 
-                if (a.Key == "SkeletalMesh" || a.Key == "AnimClass" || a.Key == "MaterialOverrides")
+                //        FormatGamePath(ref gamePath);
+                //        resultString = (MarkupString)$"{resultString}{a.Key}: <code>{gamePath}</code><br>";
+                //    }
+                //    else if (a.Value is JsonArray)
+                //    {
+                //        if (a.Value.AsArray() is JsonArray)
+                //        {
+                //            foreach (JsonNode item in a.Value.AsArray())
+                //            {
+                //                string gamePath = (string)item["OverrideMaterial"]["AssetPathName"];
+                //                FormatGamePath(ref gamePath);
+                //                resultString = (MarkupString)$"{resultString}{a.Key}: <code>{gamePath}</code><br>";
+                //            }
+
+                //        }
+                //        else
+                //        {
+                //            resultString = (MarkupString)$"{resultString}{a.Key}: <code>{string.Join(',', a.Value.AsArray())}</code><br>";
+                //        }
+                //    }
+                //    else if (a.Value is JsonValue)
+                //    {
+                //        resultString = (MarkupString)$"{resultString}{a.Key}: <code>{a.Value}</code><br>";
+                //    }
+                    
+                //}
+                //else
                 {
+                        resultString = (MarkupString)$"{resultString}<div class=\"card text-white bg-dark\" style=\"width: auto;\"><div class=\"card-body\"><h5 class=\"card-title\">{a.Key}</h5><p class=\"card-text\"><code>{a.Value}</code></p></div></div>";
 
-                    if (a.Value is JsonObject)
-                    {
-                        string gamePath = "";
-                        if ((string)a.Value["AssetPathName"] != null)
-                        {
-                            gamePath = (string)a.Value["AssetPathName"];
-                        }
-                        else if ((string)a.Value["ObjectName"] != null)
-                        {
-                            gamePath = (string)a.Value["ObjectName"];
-                        }
-
-
-                        FormatGamePath(ref gamePath);
-                        resultString = (MarkupString)$"{resultString}{a.Key}: <code>{gamePath}</code><br>";
-                    }
-                    else if (a.Value is JsonArray)
-                    {
-                        if (a.Value.AsArray() is JsonArray)
-                        {
-                            foreach (JsonNode item in a.Value.AsArray())
-                            {
-                                string gamePath = (string)item["OverrideMaterial"]["AssetPathName"];
-                                FormatGamePath(ref gamePath);
-                                resultString = (MarkupString)$"{resultString}{a.Key}: <code>{gamePath}</code><br>";
-                            }
-
-                        }
-                        else
-                        {
-                            resultString = (MarkupString)$"{resultString}{a.Key}: <code>{string.Join(',', a.Value.AsArray())}</code><br>";
-                        }
-                    }
-                    else if (a.Value is JsonValue)
-                    {
-                        resultString = (MarkupString)$"{resultString}{a.Key}: <code>{a.Value}</code><br>";
-                    }
                 }
 
             }
+            
         }
 
         return resultString;
@@ -122,7 +132,7 @@
 
     private static string FormatGamePath(string fortniteGamePath)
     {
-        FormatGamePath(ref fortniteGamePath);
+        //FormatGamePath(ref fortniteGamePath);
         return fortniteGamePath;
     }
 
